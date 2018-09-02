@@ -35,8 +35,6 @@
 #include "roadmap_path.h"
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <mad.h>
@@ -174,6 +172,7 @@ int roadmap_sound_play      (RoadMapSound sound) {
 int roadmap_sound_play_file (const char *file_name) {
    fprintf(stdout, "\nloso roadmap_sound_play_file %s called\n", file_name);
    fflush(stdout);
+#ifdef LOSOAUDIO
 
    // Initialize MAD library
    mad_stream_init(&mad_stream);
@@ -226,9 +225,14 @@ int roadmap_sound_play_file (const char *file_name) {
    mad_synth_finish(&mad_synth);
    mad_frame_finish(&mad_frame);
    mad_stream_finish(&mad_stream);
+#endif // LOSOAUDIO
 
    return 0;
 }
+
+
+
+#ifdef LOSOAUDIO
 
 // Some helper functions, to be cleaned up in the future
 int scale(mad_fixed_t sample) {
@@ -281,12 +285,12 @@ void output(struct mad_header const *header, struct mad_pcm *pcm) {
         printf("output ch = %d is not supported!", pcm->channels);
     }
 }
+#endif // LOSOAUDIO
 
 
 
 
-int roadmap_sound_list_add_buf (RoadMapSoundList list, void* buf, size_t size )
-{
+int roadmap_sound_list_add_buf (RoadMapSoundList list, void* buf, size_t size ) {
       char path[512];
       int file_num = list->count;
       RoadMapFile file;
@@ -363,11 +367,14 @@ void roadmap_sound_stop_recording (void) {
 void roadmap_sound_initialize (void) {
    fprintf(stdout, "\nloso roadmap_sound_initialize called\n");
    fflush(stdout);
+
+#ifdef LOSOAUDIO
     // Set up PulseAudio 16-bit 44.1kHz stereo output
     static const pa_sample_spec ss = { .format = PA_SAMPLE_S16LE, .rate = 44100, .channels = 2 };
     if (!(device = pa_simple_new(NULL, "Waze Navigation", PA_STREAM_PLAYBACK, NULL, "playback", &ss, NULL, NULL, &error))) {
         printf("pa_simple_new() failed\n");
     }
+#endif // LOSOAUDIO
 
 	// Initialize the volume labels for GUI
 	SND_VOLUME_LVLS_LABELS[0] = roadmap_lang_get( "Silent" );
@@ -380,10 +387,12 @@ void roadmap_sound_initialize (void) {
 void roadmap_sound_shutdown (void) {
    fprintf(stdout, "\nloso roadmap_sound_shutdown called\n");
    fflush(stdout);
+#ifdef LOSOAUDIO
    // Close PulseAudio output
    if (device) {
        pa_simple_free(device);
    }
+#endif // LOSOAUDIO
 }
 
 /***********************************************************
